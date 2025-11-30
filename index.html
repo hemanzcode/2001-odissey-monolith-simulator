@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2001 Odyssey Monolith Travel - Brasil Edition</title>
+    <title>2001 Odyssey Monolith Travel - Brasil Edition ULTRA</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         body { margin:0; overflow:hidden; background:#000; }
@@ -59,18 +59,71 @@ sun.position.set(10000, 10000, 5000);
 sun.castShadow = true;
 scene.add(sun);
 
+// ==================== ESTRELAS ====================
+const starGeo = new THREE.BufferGeometry();
+const starPositions = [];
+for (let i = 0; i < 5000; i++) {
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.random() * Math.PI;
+    const r = 80000;
+    starPositions.push(
+        r * Math.sin(phi) * Math.cos(theta),
+        r * Math.sin(phi) * Math.sin(theta),
+        r * Math.cos(phi)
+    );
+}
+starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPositions, 3));
+const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({color: 0xffffff, size: 80}));
+scene.add(stars);
+
+// ==================== NUVENS ====================
+const clouds = [];
+for (let i = 0; i < 80; i++) {
+    const cloud = new THREE.Mesh(
+        new THREE.SphereGeometry(400 + Math.random() * 300, 8, 8),
+        new THREE.MeshBasicMaterial({color: 0xffffff, transparent: true, opacity: 0.4})
+    );
+    cloud.position.set(
+        (Math.random() - 0.5) * 120000,
+        3000 + Math.random() * 2000,
+        (Math.random() - 0.5) * 120000
+    );
+    cloud.scale.set(1, 0.3, 1);
+    scene.add(cloud);
+    clouds.push({mesh: cloud, speed: 5 + Math.random() * 10});
+}
+
+// ==================== CHUVA ====================
+const rainGeo = new THREE.BufferGeometry();
+const rainPositions = [];
+for (let i = 0; i < 8000; i++) {
+    rainPositions.push(
+        (Math.random() - 0.5) * 6000,
+        Math.random() * 5000,
+        (Math.random() - 0.5) * 6000
+    );
+}
+rainGeo.setAttribute('position', new THREE.Float32BufferAttribute(rainPositions, 3));
+const rain = new THREE.Points(rainGeo, new THREE.PointsMaterial({
+    color: 0x88aaff, size: 3, transparent: true, opacity: 0.6
+}));
+rain.visible = false;
+scene.add(rain);
+
 let timeOfDay = 0;
 const cycleDuration = 480;
 
-// ==================== STARGATES VERDES GIGANTES (só troquei os portais) ====================
+// ==================== STARGATES VERDES GIGANTES (mais portais!) ====================
 const portals = [
-    { pos: new THREE.Vector3(0, 1400, -12000),    dest: new THREE.Vector3(60000, 2500, 40000), newTime: 0.0 },   // vira meia-noite
-    { pos: new THREE.Vector3(60000, 2500, 40000), dest: new THREE.Vector3(-70000, 3000, -80000), newTime: 0.5 }, // vira meio-dia
-    { pos: new THREE.Vector3(-70000, 3000, -80000), dest: new THREE.Vector3(0, 1200, 0), newTime: 0.75 }  // vira 18h
+    { pos: new THREE.Vector3(0, 1400, -12000),    dest: new THREE.Vector3(60000, 2500, 40000), newTime: 0.0 },
+    { pos: new THREE.Vector3(60000, 2500, 40000), dest: new THREE.Vector3(-70000, 3000, -80000), newTime: 0.5 },
+    { pos: new THREE.Vector3(-70000, 3000, -80000), dest: new THREE.Vector3(0, 1200, 0), newTime: 0.75 },
+    { pos: new THREE.Vector3(35000, 2200, -25000), dest: new THREE.Vector3(-40000, 1800, 55000), newTime: 0.25 },
+    { pos: new THREE.Vector3(-40000, 1800, 55000), dest: new THREE.Vector3(85000, 2800, -15000), newTime: 0.65 },
+    { pos: new THREE.Vector3(85000, 2800, -15000), dest: new THREE.Vector3(-25000, 2400, -45000), newTime: 0.85 }
 ];
 
 portals.forEach(p => {
-    // Anel verde gigante (3x maior que antes)
     const ring = new THREE.Mesh(
         new THREE.TorusGeometry(200, 30, 20, 60),
         new THREE.MeshBasicMaterial({color: 0x00ff44, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending})
@@ -81,9 +134,7 @@ portals.forEach(p => {
     p.mesh = ring;
 });
 
-// O RESTO DO CÓDIGO É 100% O MESMO DA VERSÃO QUE VOCÊ AMAVA
-// (terreno, nave, física, controles, tudo intacto)
-
+// ==================== TERRENO BRASIL ====================
 class BrasilTerrain {
     constructor() { this.chunks = new Map(); this.size = 2500; }
     getBiome(x, z) {
@@ -91,7 +142,7 @@ class BrasilTerrain {
         if (lat > 0.1 && Math.abs(lon) < 0.4) return {color: 0x003300, name: "amazonia"};
         if (Math.abs(lat) < 0.3 && Math.abs(lon) < 0.35) return {color: 0x8B6914, name: "cerrado"};
         if (lat > -0.1 && lat < 0.15 && lon > -0.3 && lon < -0.15) return {color: 0x2E8B57, name: "pantanal"};
- if (lon > 0.2) return {color: 0x006400, name: "mata_atlantica"};
+        if (lon > 0.2) return {color: 0x006400, name: "mata_atlantica"};
         if (lat > 0.2 && lon > 0.1) return {color: 0xD2B48C, name: "caatinga"};
         if (lat < -0.3) return {color: 0x228B22, name: "pampas"};
         if (this.noise(x*0.002, z*0.002) > 0.88) return {color: 0x006994, name: "agua"};
@@ -105,7 +156,7 @@ class BrasilTerrain {
     getHeight(x, z) {
         const n = this.noise(x, z);
         const base = 180 + n * 600;
-        const serras = Math.max(0, this.noise(x*0.0004, z*0.0004) - 0.2) * 3000;
+        const serras = Math.max(0, this.noise(x*0.0004, z*0.0004) - 0.2) * 5000;
         return base + serras;
     }
     addPalmTree(x, y, z) {
@@ -127,6 +178,22 @@ class BrasilTerrain {
         top.position.set(x, y+22, z);
         scene.add(trunk, top);
     }
+    addHouse(x, y, z) {
+        const base = new THREE.Mesh(new THREE.BoxGeometry(12, 8, 12), new THREE.MeshStandardMaterial({color:0xd4a574}));
+        base.position.set(x, y+4, z);
+        const roof = new THREE.Mesh(new THREE.ConeGeometry(9, 6, 4), new THREE.MeshStandardMaterial({color:0x8b4513}));
+        roof.rotation.y = Math.PI/4; roof.position.set(x, y+11, z);
+        scene.add(base, roof);
+    }
+    addRiver(x, y, z) {
+        const river = new THREE.Mesh(
+            new THREE.PlaneGeometry(30, 200),
+            new THREE.MeshStandardMaterial({color:0x4682b4, transparent:true, opacity:0.7, metalness:0.9, roughness:0.1})
+        );
+        river.rotation.x = -Math.PI/2;
+        river.position.set(x, y+1, z);
+        scene.add(river);
+    }
     createChunk(gx, gz) {
         const key = `${gx},${gz}`;
         if (this.chunks.has(key)) return;
@@ -147,6 +214,10 @@ class BrasilTerrain {
                 }
                 else if (h > 800 && Math.random() < 0.35) this.addMountainTree(x, h, z);
             }
+            if (i % 500 === 0 && Math.random() < 0.15) this.addPalmTree(x, h, z);
+            if (i % 800 === 0 && Math.random() < 0.08) this.addMountainTree(x, h, z);
+            if (i % 1200 === 0 && Math.random() < 0.05) this.addHouse(x, h, z);
+            if (i % 2000 === 0 && Math.random() < 0.1 && biome.name === "agua") this.addRiver(x, h, z);
         }
         pos.needsUpdate = true;
         geo.computeVertexNormals();
@@ -175,6 +246,7 @@ class BrasilTerrain {
 }
 const terrain = new BrasilTerrain();
 
+// ==================== AERONAVE DO JOGADOR ====================
 const aircraft = new THREE.Group();
 const mat = new THREE.MeshStandardMaterial({color: 0x1c2526, metalness: 0.8, roughness: 0.3});
 const wingShape = new THREE.Shape();
@@ -208,6 +280,35 @@ aircraft.add(flame); flame.visible = false;
 aircraft.position.set(0, 1200, 0);
 scene.add(aircraft);
 
+// ==================== AERONAVES NO CÉU ====================
+const otherAircraft = [];
+for (let i = 0; i < 12; i++) {
+    const plane = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.BoxGeometry(8, 2, 15), new THREE.MeshStandardMaterial({color:0xcccccc}));
+    plane.add(body);
+    const wing = new THREE.Mesh(new THREE.BoxGeometry(30, 0.5, 6), new THREE.MeshStandardMaterial({color:0xaaaaaa}));
+    wing.position.y = -1;
+    plane.add(wing);
+    
+    plane.position.set(
+        (Math.random() - 0.5) * 80000,
+        2000 + Math.random() * 3000,
+        (Math.random() - 0.5) * 80000
+    );
+    
+    const angle = Math.random() * Math.PI * 2;
+    plane.rotation.y = angle;
+    
+    scene.add(plane);
+    otherAircraft.push({
+        mesh: plane,
+        speed: 100 + Math.random() * 150,
+        direction: new THREE.Vector3(Math.cos(angle), 0, Math.sin(angle)),
+        altitude: plane.position.y
+    });
+}
+
+// ==================== ESTADO DA AERONAVE ====================
 const state = {
     pos: new THREE.Vector3(0, 1200, 0),
     vel: new THREE.Vector3(83, 0, 0),
@@ -229,35 +330,83 @@ const clock = new THREE.Clock();
 function animate() {
     const dt = Math.min(clock.getDelta(), 0.033);
 
-    // CICLO DIA/NOITE (inalterado)
+    // CICLO DIA/NOITE (com transições suaves de cores)
     timeOfDay += dt / cycleDuration;
     if (timeOfDay > 1) timeOfDay -= 1;
     const angle = timeOfDay * Math.PI * 2;
     const sunY = Math.sin(angle) * 12000;
     sun.position.set(Math.cos(angle)*15000, sunY, Math.sin(angle)*15000);
+    
+    // Intensidade do sol
     const intensity = Math.max(0, sunY / 12000);
     sun.intensity = intensity * 2;
     ambientLight.intensity = 0.3 + intensity * 0.7;
-    scene.background = new THREE.Color(intensity > 0.1 ? 0x87ceeb : 0x000511);
-    scene.fog.density = intensity > 0.1 ? 0.00008 : 0.00004;
+    
+    // Cores do céu com transições suaves
+    let skyColor, fogDensity, sunColor;
+    
+    if (timeOfDay < 0.25) { // Noite (0h - 6h)
+        skyColor = new THREE.Color(0x000511);
+        fogDensity = 0.00004;
+        sunColor = 0x6666ff;
+        stars.visible = true;
+    } else if (timeOfDay < 0.35) { // Amanhecer (6h - 8h30)
+        const t = (timeOfDay - 0.25) / 0.1;
+        skyColor = new THREE.Color().lerpColors(new THREE.Color(0x000511), new THREE.Color(0xff8844), t);
+        fogDensity = 0.00004 + t * 0.00004;
+        sunColor = 0xffaa44;
+        stars.visible = t < 0.5;
+    } else if (timeOfDay < 0.5) { // Manhã (8h30 - 12h)
+        const t = (timeOfDay - 0.35) / 0.15;
+        skyColor = new THREE.Color().lerpColors(new THREE.Color(0xff8844), new THREE.Color(0x87ceeb), t);
+        fogDensity = 0.00008;
+        sunColor = 0xffffe0;
+        stars.visible = false;
+    } else if (timeOfDay < 0.65) { // Tarde (12h - 15h30)
+        skyColor = new THREE.Color(0x87ceeb);
+        fogDensity = 0.00008;
+        sunColor = 0xffffe0;
+        stars.visible = false;
+    } else if (timeOfDay < 0.75) { // Entardecer (15h30 - 18h)
+        const t = (timeOfDay - 0.65) / 0.1;
+        skyColor = new THREE.Color().lerpColors(new THREE.Color(0x87ceeb), new THREE.Color(0xff6622), t);
+        fogDensity = 0.00008;
+        sunColor = 0xff8844;
+        stars.visible = false;
+    } else { // Anoitecer (18h - 0h)
+        const t = (timeOfDay - 0.75) / 0.25;
+        skyColor = new THREE.Color().lerpColors(new THREE.Color(0xff6622), new THREE.Color(0x000511), t);
+        fogDensity = 0.00008 - t * 0.00004;
+        sunColor = 0x4444aa;
+        stars.visible = t > 0.3;
+    }
+    
+    scene.background = skyColor;
+    scene.fog.density = fogDensity;
+    sun.color.setHex(sunColor);
+    
+    // Chuva aleatória
+    if (Math.random() < 0.002) {
+        rain.visible = !rain.visible;
+    }
 
     // HORA NO HUD
     const horas = Math.floor(timeOfDay * 24) % 24;
     const minutos = Math.floor((timeOfDay * 24 * 60) % 60);
     document.getElementById('hora').textContent = `${horas.toString().padStart(2,'0')}:${minutos.toString().padStart(2,'0')}`;
 
-    // PORTAL: agora muda posição + hora do dia
+    // PORTAL: muda posição + hora do dia
     for (const portal of portals) {
         if (state.pos.distanceTo(portal.pos) < 700) {
             state.pos.copy(portal.dest);
-            timeOfDay = portal.newTime;  // muda hora instantaneamente
+            timeOfDay = portal.newTime;
             state.vel.multiplyScalar(0.4);
             aircraft.position.copy(state.pos);
             break;
         }
     }
 
-    // resto 100% igual à versão anterior (controles, física, HUD, etc.)
+    // CONTROLES
     if (keys['c']) {
         const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(aircraft.quaternion);
         state.vel.add(forward.multiplyScalar(600 * dt));
@@ -324,6 +473,37 @@ function animate() {
     aircraft.quaternion.copy(quat);
     terrain.update(state.pos);
     portals.forEach(p => p.mesh.rotation.z += dt * 0.6);
+    
+    // Movimento das nuvens
+    clouds.forEach(c => {
+        c.mesh.position.x += c.speed * dt;
+        if (c.mesh.position.x > 60000) c.mesh.position.x = -60000;
+    });
+    
+    // Movimento da chuva
+    if (rain.visible) {
+        const rainPos = rain.geometry.attributes.position;
+        for (let i = 0; i < rainPos.count * 3; i += 3) {
+            rainPos.array[i+1] -= 1500 * dt;
+            if (rainPos.array[i+1] < 0) rainPos.array[i+1] = 5000;
+        }
+        rainPos.needsUpdate = true;
+        rain.position.set(state.pos.x, 0, state.pos.z);
+    }
+    
+    // Movimento das aeronaves
+    otherAircraft.forEach(p => {
+        p.mesh.position.x += p.direction.x * p.speed * dt;
+        p.mesh.position.z += p.direction.z * p.speed * dt;
+        p.mesh.position.y = p.altitude + Math.sin(Date.now() * 0.0005 + p.mesh.position.x * 0.001) * 50;
+        
+        if (Math.abs(p.mesh.position.x) > 100000 || Math.abs(p.mesh.position.z) > 100000) {
+            const newAngle = Math.random() * Math.PI * 2;
+            p.mesh.position.set(state.pos.x + (Math.random() - 0.5) * 10000, p.altitude, state.pos.z + (Math.random() - 0.5) * 10000);
+            p.mesh.rotation.y = newAngle;
+            p.direction.set(Math.cos(newAngle), 0, Math.sin(newAngle));
+        }
+    });
 
     const camOffset = new THREE.Vector3(0, 80, 250).applyQuaternion(quat);
     camera.position.lerp(state.pos.clone().add(camOffset), 0.1);
